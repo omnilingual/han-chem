@@ -1,0 +1,11 @@
+{
+	"name": "@omnilingual/han-chem",
+	"type": "module",
+	"imports": {
+		"@source/*": "./source/*",
+		"@dev/*": "./dev/*"
+	},
+	"scripts": {
+		"dev": "node --experimental-import-meta-resolve ./dev/main.mjs"
+	}
+}
