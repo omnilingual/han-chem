@@ -1,19 +1,18 @@
-import * as DataLoader from './data-loader.mjs';
+import * as Data from './data.mjs';
 
+const table = await Data.LoadAsync();
 /**
- * @typedef {import('./data-loader.mjs').KwangHjunAllCharactersTableRow} KwangHjunAllCharactersTableRow
- * @typedef {Map<string, KwangHjunAllCharactersTableRow[]>} GlyphRecords
+ * @summary 《广韵》全字形。每个字形可能对应多个条目；用数组承载。
+ * @type {Map<string, KwangHjunAllCharactersTableEntry[]>}
  */
-
-const table = await DataLoader.LoadAsync();
-/** @type {GlyphRecords} */
 const glyphs = new Map();
 for(const row of table) {
-	const glyph = row.guangYunZiTou_HeJiaoHou;
+	const entry = row;
+	const glyph = entry.guangYunZiTou_HeJiaoHou;
 	if(!glyphs.has(glyph))
 		glyphs.set(glyph, []);
 	const entries = glyphs.get(glyph);
-	entries.push(row);
+	entries.push(entry);
 }
 
 export default glyphs;

@@ -1,19 +1,29 @@
 import KwangHjunGlyphs from './kwang-hjun-all-characters-table/index.mjs';
 
 /**
+ * @summary 全体收录字形。
+ * @type {Set<string>}
+ */
+export const allGlyphs = new Set([
+	...KwangHjunGlyphs,
+	// TODO: 添加其他来源的字形；重复也不打紧。
+]);
+
+/**
  * 检测字形是否直接包含某个偏旁。
  * @param {string} glyph 要检测的字形。
  * @param {string[]} shapeParts 要检测的偏旁列表。
  * @returns {boolean}
  */
 function IsGlyphContainingShapeParts(glyph, shapeParts) {
+	// 《》
 	if(KwangHjunGlyphs.has(glyph)) {
-		for(const row of KwangHjunGlyphs.get(glyph)) {
-			for(const g of row.shengXing_Xing) {
+		for(const entry of KwangHjunGlyphs.get(glyph)) {
+			for(const g of entry.shengXing_Xing) {
 				if(shapeParts.includes(g))
 					return true;
 			}
-			for(const g of row.shengPang) {
+			for(const g of entry.shengPang) {
 				if(shapeParts.includes(g))
 					return true;
 			}
@@ -32,7 +42,7 @@ export function FindAllGlyphsContainingShapePart(shapePart, includesSelf = true)
 	if(!KwangHjunGlyphs.has(shapePart))
 		return [];
 
-	// Perform a BFS on all glyphs.
+	// 对所有字形进行广搜。
 
 	const foundGlyphs = [];
 	if(includesSelf)
