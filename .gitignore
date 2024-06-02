@@ -1,5 +1,5 @@
 # Node JS
 /node_modules
 
-# Dev data
-/dev/**/data
+# Dev
+/dev
