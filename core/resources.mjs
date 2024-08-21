@@ -4,7 +4,7 @@ import * as Url from 'url';
 
 //#region Path constants
 const thisScriptDir = Path.dirname(Url.fileURLToPath(import.meta.url));
-const projectRootDir = Path.resolve(thisScriptDir, '../..');
+const projectRootDir = Path.resolve(thisScriptDir, '..');
 const resourceDir = Path.resolve(projectRootDir, 'resources');
 //#endregion
 
@@ -15,5 +15,5 @@ const resourceDir = Path.resolve(projectRootDir, 'resources');
  */
 export function LoadResourcesAsync(path) {
 	const path = Path.join(resourceDir, path);
-	return return Fs.readFile(path);
+	return Fs.readFile(path);
 }
