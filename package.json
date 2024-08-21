@@ -2,5 +2,10 @@
 	"name": "@omnilingual/han-chem",
 	"type": "module",
 	"main": "./src/index.mjs",
-	"scripts": {}
+	"scripts": {
+		"dev": "node src/main.mjs"
+	},
+	"devDependencies": {
+		"@types/node": "^22.4.2"
+	}
 }

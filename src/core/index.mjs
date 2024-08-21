@@ -1,13 +1,24 @@
-import KwangHjunGlyphs from './kwang-hjun-all-characters-table/index.mjs';
+import KwangHjunGlyphs from './kwang-hjun-all-characters-table.mjs';
 
 /**
  * @summary 全体收录字形。
  * @type {Set<string>}
  */
-export const allGlyphs = new Set([
-	...KwangHjunGlyphs,
+export const glyphs = new Set([
+	...KwangHjunGlyphs.keys(),
 	// TODO: 添加其他来源的字形；重复也不打紧。
 ]);
+
+/**
+ * 在《广韵》中查询字形信息。
+ * @param {string} glyph 要检测的字形。
+ * @returns {import('./kwang-hjun-all-characters-table/index.mjs').KwangHjunAllCharactersTableEntry[]}
+ */
+export function QueryRowsInKwangHjunByGlyph(glyph) {
+	if(!KwangHjunGlyphs.has(glyph))
+		return [];
+	return KwangHjunGlyphs.get(glyph);
+}
 
 /**
  * 检测字形是否直接包含某个偏旁。
