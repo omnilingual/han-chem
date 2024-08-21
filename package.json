@@ -3,7 +3,7 @@
 	"type": "module",
 	"main": "./src/index.mjs",
 	"scripts": {
-		"dev": "node src/main.mjs"
+		"dev": "node ./main.mjs"
 	},
 	"devDependencies": {
 		"@types/node": "^22.4.2"

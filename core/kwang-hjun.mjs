@@ -5,7 +5,7 @@ const columns = [
 
 //#region 字表行之類型定義
 /**
- * @typedef {Object} KwangHjunAllCharactersTableEntry
+ * @typedef {Object} KwangHjunEntry
  * 廣韻全字表之一行數據。
  * 字段按照駝峰規則，以漢語拼音照搬表頭；凡遇連續標點皆化爲單個下劃綫；末尾消重複之撇號亦作下劃綫。
  * @property {string} xieShengXu 諧聲序
@@ -141,9 +141,9 @@ const table = await (async () => {
 
 /**
  * @summary 《广韵》全字形。每个字形可能对应多个条目；用数组承载。
- * @type {Map<string, KwangHjunAllCharactersTableEntry[]>}
+ * @type {Map<string, KwangHjunEntry[]>}
  */
-const glyphs = new Map();
+export const glyphs = new Map();
 for(const row of table) {
 	const entry = row;
 	const glyph = entry.guangYunZiTou_HeJiaoHou;
@@ -152,22 +152,15 @@ for(const row of table) {
 	const entries = glyphs.get(glyph);
 	entries.push(entry);
 }
-
-export default glyphs;
 //#endregion
 
 //#region Functions
-import * as Path from 'path';
-import * as Url from 'url';
-const thisScriptDir = Path.dirname(Url.fileURLToPath(import.meta.url));
-const tablePath = Path.resolve(thisScriptDir, './廣韻全字表.csv');
-
 import * as Resource from './resources.mjs';
 async function ReadTableContentAsync() {
-	return (await Resource.LoadResourcesAsync(tablePath)).toString('utf-8');
+	return (await Resource.LoadResourcesAsync('kwang-hjun/廣韻全字表.csv')).toString('utf-8');
 }
 
-/** @returns {Promise<KwangHjunAllCharactersTableEntry[]>} */
+/** @returns {Promise<KwangHjunEntry[]>} */
 async function ReadRowsFromTable(fileContent) {
 	const rows = [];
 	const totalLength = fileContent.length;
@@ -187,5 +180,16 @@ async function ReadRowsFromTable(fileContent) {
 	}
 
 	return rows;
+}
+
+/**
+ * 在《广韵》中查询字形信息。
+ * @param {string} glyph 要检测的字形。
+ * @returns {KwangHjunEntry[]}
+ */
+export function QueryRows(glyph) {
+	if(!glyphs.has(glyph))
+		return [];
+	return glyphs.get(glyph);
 }
 //#endregion

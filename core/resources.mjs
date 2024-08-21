@@ -14,6 +14,6 @@ const resourceDir = Path.resolve(projectRootDir, 'resources');
  * @returns {Promise<Buffer>}
  */
 export function LoadResourcesAsync(path) {
-	const path = Path.join(resourceDir, path);
-	return Fs.readFile(path);
+	const realPath = Path.join(resourceDir, path);
+	return Fs.readFile(realPath);
 }
