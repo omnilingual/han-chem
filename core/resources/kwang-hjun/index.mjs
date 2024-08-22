@@ -135,8 +135,8 @@ const columns = [
 //#region Export
 const table = await (async () => {
 	const fileContent = await ReadTableContentAsync();
-	const rows = await ReadRowsFromTable(fileContent);
-	return rows;
+	const entries = await ReadEntriesFromTable(fileContent);
+	return entries;
 })();
 
 /**
@@ -144,8 +144,7 @@ const table = await (async () => {
  * @type {Map<string, KwangHjunEntry[]>}
  */
 export const glyphs = new Map();
-for(const row of table) {
-	const entry = row;
+for(const entry of table) {
 	const glyph = entry.guangYunZiTou_HeJiaoHou;
 	if(!glyphs.has(glyph))
 		glyphs.set(glyph, []);
@@ -155,31 +154,44 @@ for(const row of table) {
 //#endregion
 
 //#region Functions
-import * as Resource from './resources.mjs';
+import * as Fs from 'fs/promises';
+import * as Path from 'path';
+import * as Url from 'url';
 async function ReadTableContentAsync() {
-	return (await Resource.LoadResourcesAsync('kwang-hjun/廣韻全字表.csv')).toString('utf-8');
+	const thisScriptDir = Path.dirname(Url.fileURLToPath(import.meta.url));
+	const dataPath = Path.join(thisScriptDir, '廣韻全字表.csv');
+	return (await Fs.readFile(dataPath)).toString('utf-8');
 }
 
 /** @returns {Promise<KwangHjunEntry[]>} */
-async function ReadRowsFromTable(fileContent) {
-	const rows = [];
+async function ReadEntriesFromTable(fileContent) {
+	const entries = [];
 	const totalLength = fileContent.length;
-	for(var startIndex = 0, rowCount = 0; startIndex < totalLength; ++rowCount) {
+	for(var startIndex = 0, entryCount = 0; startIndex < totalLength; ++entryCount) {
 		var lineBreakIndex = fileContent.indexOf('\n', startIndex);
 		if(lineBreakIndex == -1)
 			lineBreakIndex = totalLength;
-		var rowRaw = fileContent.substring(startIndex, lineBreakIndex);
+		var entryRaw = fileContent.substring(startIndex, lineBreakIndex);
 
-		// Skip the header row.
-		if(rowCount != 0) {
-			const row = Object.fromEntries(rowRaw.split(',').map((v, i) => [columns[i], v]));
-			rows.push(row);
+		// Skip the header entry.
+		if(entryCount != 0) {
+			const entry = Object.fromEntries(entryRaw.split(',').map((v, i) => [columns[i], v]));
+			entries.push(entry);
 		}
 
 		startIndex = lineBreakIndex + 1;
 	}
 
-	return rows;
+	return entries;
+}
+
+/**
+ * 查询《广韵》中是否收录字形。
+ * @param {string} glyph 要检测的字形。
+ * @returns {boolean}
+ */
+export function HasGlyph(glyph) {
+	return glyphs.has(glyph);
 }
 
 /**
@@ -187,8 +199,8 @@ async function ReadRowsFromTable(fileContent) {
  * @param {string} glyph 要检测的字形。
  * @returns {KwangHjunEntry[]}
  */
-export function QueryRows(glyph) {
-	if(!glyphs.has(glyph))
+export function QueryEntries(glyph) {
+	if(!HasGlyph(glyph))
 		return [];
 	return glyphs.get(glyph);
 }

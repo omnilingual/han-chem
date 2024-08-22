@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>漢鑒</title>
+	<link rel="stylesheet" href="./index.css" />
+	<script type="module" src="./index.mjs"></script>
+</head>
+<body>
+	<header>
+		<h1>漢鑒</h1>
+		<form id="glyph-query-form" name="glyph-query-form" method="get" action=".">
+			<span>
+				输入字形：
+				<input name="glyph" type="text" />
+				<button>搜索</button>
+			</span>
+		</form>
+	</header>
+	<main>
+		<pre id="result"></pre>
+	</main>
+	<footer></footer>
+</body>
+</html>

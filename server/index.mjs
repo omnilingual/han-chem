@@ -1,10 +1,26 @@
-import * as Http from 'http';
+import Express from 'express';
 
-/** @type {import('net').Server} */
-const server = Http.createServer(function(req, res) {
-	res.writeHead(200);
-	res.write('hello, world');
-	res.end();
-});
+const app = Express();
+export default app;
 
-export default server;
+// Constants
+import * as Path from 'path';
+import * as Url from 'url';
+const thisScriptDir = Path.dirname(Url.fileURLToPath(import.meta.url));
+
+// Static files
+const publicDir = Path.join(thisScriptDir, 'public');
+// Stylus support
+import ExpressStylus from 'express-stylus';
+import Nib from 'nib';
+app.use(ExpressStylus({
+	src: publicDir,
+	use: [Nib()],
+	import: ['nib']
+}));
+// Other static files
+app.use('/', Express.static(publicDir));
+
+// APIs
+import Apis from './apis.mjs';
+app.use('/api', Apis);
