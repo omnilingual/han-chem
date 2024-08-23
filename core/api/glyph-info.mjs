@@ -1,4 +1,4 @@
-import * as KwangHjun from './resources/kwang-hjun/index.mjs';
+import * as KwangHjun from '../resources/kwang-hjun/index.mjs';
 
 /**
  * 依键名检测是否收录了某个字形。

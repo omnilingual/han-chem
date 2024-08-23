@@ -1,4 +1,4 @@
-import server from './server/index.mjs';
+import server from './server/src/index.mjs';
 
 const port = 8080;
 server.listen(port);

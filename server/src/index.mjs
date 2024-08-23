@@ -9,7 +9,7 @@ import * as Url from 'url';
 const thisScriptDir = Path.dirname(Url.fileURLToPath(import.meta.url));
 
 // Static files
-const publicDir = Path.join(thisScriptDir, 'public');
+const publicDir = Path.join(Path.resolve(thisScriptDir, '..'), 'public');
 // Stylus support
 import ExpressStylus from 'express-stylus';
 import Nib from 'nib';

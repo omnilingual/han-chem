@@ -3,7 +3,7 @@ import { Express, HttpError, HandleHttpErrors } from './web.mjs';
 const router = Express.Router();
 export default router;
 
-import * as HanChem from '../core/index.mjs';
+import * as HanChem from '../../core/index.mjs';
 
 router.get('/query-glyph-info', HandleHttpErrors(function(req, res) {
 	const query = req.query['glyph'];
