@@ -1,6 +1,8 @@
 # Project
 /dist
 /dev
+/**/*.d.*ts
+/**/*.*js
 
 # Node JS
 /node_modules
