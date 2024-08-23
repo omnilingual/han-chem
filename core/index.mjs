@@ -1,1 +1,1 @@
-export * from './apis.mjs';
+export * from './api/glyph-info.mjs';

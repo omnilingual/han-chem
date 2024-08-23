@@ -22,5 +22,5 @@ app.use(ExpressStylus({
 app.use('/', Express.static(publicDir));
 
 // APIs
-import Apis from './apis.mjs';
-app.use('/api', Apis);
+import Api from './api.mjs';
+app.use('/api', Api);
