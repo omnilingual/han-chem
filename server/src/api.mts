@@ -6,7 +6,7 @@ export default router;
 import * as HanChem from '../../core/index.mjs';
 
 router.get('/query-glyph-info', HandleHttpErrors(function(req, res) {
-	const query = req.query['glyph'];
+	const query = req.query['glyph-key'];
 
 	// Reject empty queries;
 	if(typeof query !== 'string' || query.length <= 0)

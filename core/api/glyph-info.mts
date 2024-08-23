@@ -1,99 +1,50 @@
 import * as KwangHjun from '../kwang-hjun.mjs';
+import type * as Types from './glyph-info-types.mts';
 
-/**
- * 依键名检测是否收录了某个字形。
- * @param key 要检测的键名。
- */
-export function HasGlyph(key: string): boolean {
-	if(KwangHjun.HasGlyph(key))
+/** 依键名检测是否收录了某个字形。 */
+export function HasGlyph(glyphKey: string): boolean {
+	if(KwangHjun.HasGlyph(glyphKey))
 		return true;
 	return false;
 }
 
-//#region Type definitions
-type GlyphInfo = {
-	/** 对应此字形的内在键名。 */
-	key: string;
-	/** 基本信息。 */
-	identity?: {
-		//
-	};
-	/** 音韵分析。 */
-	phonology?: {
-		/** 全部音韵信息记录。 */
-		records: PhonologyRecord[];
-	};
-};
-
-type PhonologyRecord = {
-	/** 时代。 */
-	era: '上古' | '早期中古' | '晚期中古' | '近代' | '现代';
-	/** 域，即此条信息出自哪个韵书，或来自哪门方言。 */
-	domain: string;
-	/** 音韵分析。 */
-	analysis: OCPhonology | EMCPhonology | LMCPhonology;
-};
-
-type OCPhonology = {
-	/** 韵部。 */
-	rhymeClass: string;
-	/** 拟音。 */
-	reconstruction: string;
-};
-
-type MCPhonolgy = {
-	/** 声。 */
-	initial: string;
-	/** 摄。 */
-	rhymeClass: string;
-	/** 韵。 */
-	rhyme: string;
-	/** 调。 */
-	tone: '平' | '上' | '去' | '入';
-};
-
-type EMCPhonology = MCPhonolgy & {
-	/** 等。 */
-	division: '一' | '二' | '三' | '四';
-	/** 呼。 */
-	medial: '开' | '合';
-};
-
-type LMCPhonology = MCPhonolgy & {
-	/** 呼。 */
-	medial: '开' | '齐' | '合' | '撮';
-};
-//#endregion
+/** 字形是否因非 Unicode 字符而采用索引收录。 */
+export function IsIndexedGlyph(glyphKey: string): boolean {
+	return true;
+}
 
 /**
  * 查询字形信息。
- * @param glyph 要检测的字形。
+ * @param glyphKey 要检测的字形。
  */
-export function QueryGlyphInfo(glyph: string): GlyphInfo | null {
-	if(!HasGlyph(glyph))
+export function QueryGlyphInfo(glyphKey: string): Types.GlyphInfo | null {
+	if(!HasGlyph(glyphKey))
 		return null;
 
-	const info: GlyphInfo = {
-		key: glyph,
+	const info: Types.GlyphInfo = {
+		identity: {
+			key: glyphKey,
+			unicodeCharacter: IsIndexedGlyph(glyphKey) ? glyphKey : null,
+		},
 		phonology: {
 			records: []
 		},
 	};
 
 	// 早期中古：《切韵》
-	for(const entry of KwangHjun.QueryEntries(glyph)) {
-		const emc: EMCPhonology = {
+	for(const entry of KwangHjun.QueryEntries(glyphKey)) {
+		const emcAnalysis: Types.EMCPhonology = {
 			initial: entry.shengNiu,
-			division: entry.deng as EMCPhonology['division'],
-			medial: entry.hu as EMCPhonology['medial'],
+			division: entry.deng as Types.EMCPhonology['division'],
+			medial: entry.hu as Types.EMCPhonology['medial'],
 			rhymeClass: entry.she,
 			rhyme: entry.yunBu_TiaoZhengHou,
-			tone: entry.shengDiao as EMCPhonology['tone'],
+			tone: entry.shengDiao as Types.EMCPhonology['tone'],
 		};
-		const record: PhonologyRecord = {
+		const record: Types.PhonologyRecord = {
 			domain: '廣韻',
 			era: '早期中古',
-			analysis: emc,
+			analysis: emcAnalysis,
 		};
 		info.phonology.records.push(record);
 	}
