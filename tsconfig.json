@@ -1,6 +1,5 @@
 {
-	"files": ["main.mts"],
-	"include": ["core/**/*.*ts", "server/**/*.*ts"],
+	"include": ["**/*.*ts"],
 	"exclude": ["**/*.d.*ts"],
 	"compilerOptions": {
 		// Environment
