@@ -1,0 +1,27 @@
+{
+	"files": ["main.mts"],
+	"include": ["core/**/*.*ts", "server/**/*.*ts"],
+	"exclude": ["**/*.d.ts"],
+	"compilerOptions": {
+		// Environment
+		"rootDir": ".",
+		"baseUrl": ".",
+		"outDir": ".",
+
+		// Compiling
+		"lib": ["ESNext", "DOM"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"paths": {
+			"@/*": ["/*"],
+			"@core/*": ["@/core/*"],
+			"@server/*": ["@/server/*"],
+		},
+		"declaration": true,
+
+		// Grammar
+		"allowJs": false,
+		"allowUnreachableCode": true,
+		"alwaysStrict": true,
+	},
+}

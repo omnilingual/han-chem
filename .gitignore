@@ -1,5 +1,6 @@
+# Project
+/dist
+/dev
+
 # Node JS
 /node_modules
-
-# Dev
-/dev
