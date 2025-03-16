@@ -1,16 +1,29 @@
-buildDir = .
-entry = $(buildDir)/main.mjs
-allDependencies = $(filter-out $(wildcard **/*.d.*ts), $(wildcard **/*.*ts))
+SHELL:=/bin/bash
 
-build: $(entry)
+buildDir = ./
+entryFile = $(buildDir)main.mjs
 
-.PHONY: dev
+daemonStarter=pm2
 
-$(entry): $(allDependencies)
+entry:
+	@echo "No command given.";
+
+build:
 	npx tsc --build;
-
-dev: $(entry)
-	node $(entry);
 
 clean:
 	npx tsc --build --clean;
+
+dev: $(entryFile)
+	node $(entryFile);
+
+start:
+	mode=production $(daemonStarter) start $(buildDir)$(entryFile);
+
+stop:
+	$(daemonStarter) stop $(buildDir)$(entryFile);
+
+show:
+	$(daemonStarter) list;
+
+.PHONY: build
