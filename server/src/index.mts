@@ -24,3 +24,7 @@ app.use('/', Express.static(publicDir));
 // APIs
 import Api from './api.mjs';
 app.use('/api', Api);
+
+// Error handling
+import { HandleHttpErrors } from './web.mjs';
+app.use(HandleHttpErrors);

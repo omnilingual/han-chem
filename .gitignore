@@ -3,6 +3,8 @@
 /dev
 /**/*.d.*ts
 /**/*.*js
+!/server/public/**/*.*js
+/server/public/**/*.css
 
 # Node JS
 /node_modules
