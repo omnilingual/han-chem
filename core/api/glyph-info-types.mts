@@ -5,7 +5,7 @@
  * 此字段只指示字形是否为自古已有的，而不与简化字方案互斥。
  * 未简化过的字形与简化字形不同的繁体字均指示为 `true`。
 */
-type GCTraditional = 'traditional';
+type GCTraditional = '傳承字';
 /**
  * 第一批简化字形。
  * @description
@@ -13,7 +13,7 @@ type GCTraditional = 'traditional';
  * 未简化过的字形与第一批简化字都指示为 `true`，
  * 而繁体字、二简字与外国国字则指示为 `false`。
 */
-type GCPrimarilySimplified = 'primarily-simplified';
+type GCPrimarilySimplified = '簡化字';
 /**
  * 第二批简化字形。
  * @description
@@ -21,8 +21,10 @@ type GCPrimarilySimplified = 'primarily-simplified';
  * 未简化过的字形与第二批简化字都指示为 `true`，
  * 而繁体字、一简字与外国国字则指示为 `false`。
 */
-type GCSecondlySimplified = 'secondly-simplified';
-export type GlyphClassification = GCTraditional | GCPrimarilySimplified | GCSecondlySimplified;
+type GCSecondlySimplified = '二級簡化字';
+type GCStandards = GCTraditional | GCPrimarilySimplified | GCSecondlySimplified
+type GCComposition = '聲旁' | '次級聲旁';
+export type GlyphClassification = GCStandards | GCComposition;
 
 /** 字形信息之结构体之定义。 */
 export type GlyphInfo = {
@@ -34,7 +36,15 @@ export type GlyphInfo = {
 		unicodeCharacter: string | null;
 		/** 此字形的分类。 */
 		classifications: GlyphClassification[];
-		relatedGlyphs: GlyphRelation[];
+	};
+	/** 字形学信息。 */
+	composition: {
+		method: '形聲' | '會意' | '整體' | '複聲' | '曡聲';
+		/** 形旁。 */
+		shapes: string[];
+		/** 声旁。 */
+		sounds: string[];
+		notes?: string;
 	};
 	/** 音韵分析。 */
 	phonology?: {
@@ -43,25 +53,17 @@ export type GlyphInfo = {
 	};
 };
 
-/** 字形与其他字形之关联。 */
-type GlyphRelation = {
-	/** 相关联之字形的键名。 */
-	key: string;
-	type:
-		'simplification' | 'simplified from' |
-		'composition' | 'composed of';
-};
-
 //#region Phonology
 export type PhonologyRecord = {
 	/** 时代。 */
-	era: '上古' | '早期中古' | '晚期中古' | '近代' | '现代';
+	era: '上古' | '早期中古' | '晚期中古' | '近古' | '現代';
 	/** 域，即此条信息出自哪个韵书，或来自哪门方言。 */
 	domain: string;
 	/** 音韵分析。 */
-	analysis: OCPhonology | EMCPhonology | LMCPhonology;
+	analysis: OCPhonology | EMCPhonology | LMCPhonology | ModernPhonology | ContemporaryPhonology;
 };
 
+/** 上古音韻。 */
 export type OCPhonology = {
 	/** 韵部。 */
 	rhymeClass: string;
@@ -69,7 +71,16 @@ export type OCPhonology = {
 	reconstruction: string;
 };
 
-export type MCPhonolgy = {
+/** 早期中古音韻（反切）。 */
+export type EMCPhonology = {
+	/** 反切上字。 */
+	top: string;
+	/** 反切下字。 */
+	bottom: string;
+};
+
+/** 晚期中古音韻。 */
+export type LMCPhonology = {
 	/** 声。 */
 	initial: string;
 	/** 摄。 */
@@ -78,17 +89,25 @@ export type MCPhonolgy = {
 	rhyme: string;
 	/** 调。 */
 	tone: '平' | '上' | '去' | '入';
-};
-
-export type EMCPhonology = MCPhonolgy & {
 	/** 等。 */
 	division: '一' | '二' | '三' | '四';
 	/** 呼。 */
 	medial: '开' | '合';
 };
 
-export type LMCPhonology = MCPhonolgy & {
+/** 近古音韻。 */
+export type ModernPhonology = Omit<LMCPhonology, 'medial'> & {
 	/** 呼。 */
 	medial: '开' | '齐' | '合' | '撮';
+};
+
+/** 現代音韻。 */
+export type ContemporaryPhonology = {
+	/** 声。 */
+	initial: string;
+	/** 韵。 */
+	rhyme: string;
+	/** 調。 */
+	tone: string;
 };
 //#endregion
