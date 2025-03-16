@@ -3,6 +3,7 @@
 	"type": "module",
 	"main": "./src/index.mjs",
 	"devDependencies": {
+		"@types/lodash": "^4.17.16",
 		"@types/node": "^22.4.2",
 		"typescript": "^5.5.4"
 	},
@@ -11,6 +12,7 @@
 		"@types/nib": "^1.1.2",
 		"express": "^4.19.2",
 		"express-stylus": "^0.1.1",
+		"lodash": "^4.17.21",
 		"nib": "^1.2.0",
 		"pm2": "^6.0.5"
 	}
