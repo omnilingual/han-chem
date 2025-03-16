@@ -37,6 +37,10 @@ function EvalUrl() {
  * @param {string} glyph
  */
 async function PerformQuery(glyph) {
+	// Update document title.
+	const $title = document.getElementsByTagName('title')[0];
+	$title.innerText = `${glyph}: ${$title.innerText}`;
+
 	const fetchUrl = new URL('/api/query-glyph-info', location.href);
 	fetchUrl.searchParams.append(glyphKeySearchParamName, glyph);
 	const response = await fetch(fetchUrl.href);

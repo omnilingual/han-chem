@@ -3,19 +3,23 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>漢鑒</title>
+	<title>漢鑒/字形信息</title>
 	<link rel="stylesheet" href="./index.css" />
 	<script type="module" src="./index.mjs"></script>
 </head>
 <body>
 	<header>
-		<h1>漢鑒</h1>
+		<h1><a href="/">漢鑒</a>/<a href="/glyph-info">字形信息</a></h1>
 		<form id="glyph-query-form" name="glyph-query-form" method="get" action=".">
-			<span>
+			<p>
 				输入字形：
 				<input name="glyph-key" type="text" />
 				<button>搜索</button>
-			</span>
+			</p>
+			<ul>
+				<li>暫僅支持《廣韻》中收錄的字形。</li>
+				<li>一次暫只能搜索一字。</li>
+			</ul>
 		</form>
 	</header>
 	<main>
