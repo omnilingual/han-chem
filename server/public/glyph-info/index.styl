@@ -1,15 +1,11 @@
-body {
-	&.search {}
-
-	&.query {}
-
-	&.result {}
-}
-
 #result {
-	&.result {}
+	display: grid;
+	grid-template-columns: repeat(9, auto);
+	gap: 1pt;
 
-	&.error {
-		color: red;
+	>* {
+		border: 1px solid;
+		text-align: center;
+		align-content: center;
 	}
 }
