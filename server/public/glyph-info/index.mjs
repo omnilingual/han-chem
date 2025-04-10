@@ -82,7 +82,7 @@ function DisplayResult(glyph, result) {
 		if('text' in settings)
 			$.innerText = settings.text;
 		if('colspan' in settings)
-			$.style.gridColumn = $`span ${+settings.colspan - 1}`;
+			$.style.gridColumn = `span ${+settings.colspan}`;
 		return $;
 	};
 
