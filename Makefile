@@ -1,12 +1,8 @@
 SHELL:=/bin/bash
 
-buildDir = ./
-entryFile = $(buildDir)main.mjs
-
-daemonStarter=pm2
-
-entry:
-	@echo "No command given.";
+# ---- 本地构建 ----
+buildDir=./
+entryFile=$(buildDir)main.mjs
 
 build:
 	npx tsc --build;
@@ -14,16 +10,26 @@ build:
 clean:
 	npx tsc --build --clean;
 
-dev: $(entryFile)
-	node $(entryFile);
+dev:
+	mode=dev node $(entryFile);
 
-start:
-	mode=production $(daemonStarter) start $(buildDir)$(entryFile);
+# ---- 发布（逻辑在 deploy/deploy.sh，Makefile 只做薄封装） ----
+deploy:
+	bash deploy/deploy.sh deploy
 
-stop:
-	$(daemonStarter) stop $(buildDir)$(entryFile);
+deploy-sync:
+	bash deploy/deploy.sh sync
 
-show:
-	$(daemonStarter) list;
+svc-status:
+	bash deploy/deploy.sh status
 
-.PHONY: build
+svc-restart:
+	bash deploy/deploy.sh restart
+
+svc-start:
+	bash deploy/deploy.sh start
+
+svc-stop:
+	bash deploy/deploy.sh stop
+
+.PHONY: build clean dev deploy deploy-sync svc-status svc-restart svc-start svc-stop

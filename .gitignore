@@ -8,3 +8,6 @@
 
 # Node JS
 /node_modules
+
+# 部署状态标记（本地）
+.deploy-commit
