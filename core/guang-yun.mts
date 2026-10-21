@@ -4,7 +4,7 @@ const columns = [
 ];
 
 /** 字表行之類型定義。 */
-type KwangHjunEntry = {
+type GuangYunEntry = {
 	xieShengXu: string;
 	xingXu: string;
 	sheng_MingXi: string;
@@ -120,15 +120,15 @@ type KwangHjunEntry = {
 
 //#region Export
 const table = await (async () => {
-	console.log('Loading KwangHjun database...');
+	// console.log('Loading GuangYun database...');
 	const fileContent = await ReadTableContentAsync();
 	const entries = await ReadEntriesFromTable(fileContent);
-	console.log('KwangHjun database loaded.');
+	// console.log('GuangYun database loaded.');
 	return entries;
 })();
 
 /** 《广韵》全字形。每个字形可能对应多个条目；用数组承载。 */
-export const glyphs: Map<string, KwangHjunEntry[]> = new Map();
+export const glyphs: Map<string, GuangYunEntry[]> = new Map();
 for(const entry of table) {
 	const glyph = entry.guangYunZiTou_HeJiaoHou;
 	if(!glyphs.has(glyph))
@@ -141,10 +141,10 @@ for(const entry of table) {
 //#region Functions
 import * as Resources from './resources.mjs';
 async function ReadTableContentAsync() {
-	return (await Resources.Load('kwang-hjun/廣韻全字表.csv')).toString('utf-8');
+	return (await Resources.Load('guang-yun/廣韻全字表.csv')).toString('utf-8');
 }
 
-async function ReadEntriesFromTable(fileContent: string): Promise<KwangHjunEntry[]> {
+async function ReadEntriesFromTable(fileContent: string): Promise<GuangYunEntry[]> {
 	const entries = [];
 	const totalLength = fileContent.length;
 	for(var startIndex = 0, entryCount = 0; startIndex < totalLength; ++entryCount) {
@@ -173,7 +173,7 @@ export function HasGlyph(glyph: string): boolean {
 }
 
 /** 在《广韵》中查询字形信息。 */
-export function QueryEntries(glyph: string): KwangHjunEntry[] {
+export function QueryEntries(glyph: string): GuangYunEntry[] {
 	if(!HasGlyph(glyph))
 		return [];
 	return glyphs.get(glyph);

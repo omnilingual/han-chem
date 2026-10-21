@@ -1,10 +1,10 @@
-import * as KwangHjun from '../kwang-hjun.mjs';
+import * as GuangYun from '../guang-yun.mjs';
 import type * as Types from './glyph-info-types.mts';
 import Lodash, { at } from 'lodash';
 
 /** 依键名检测是否收录了某个字形。 */
 export function HasGlyph(glyphKey: string): boolean {
-	if(KwangHjun.HasGlyph(glyphKey))
+	if(GuangYun.HasGlyph(glyphKey))
 		return true;
 	return false;
 }
@@ -71,7 +71,7 @@ export function QueryGlyphInfo(glyphKey: string): Types.GlyphInfo | null {
 		phonology: [],
 	};
 	// 讀取《廣韻》數據庫。
-	for(const entry of KwangHjun.QueryEntries(glyphKey)) {
+	for(const entry of GuangYun.QueryEntries(glyphKey)) {
 		// 记录字形学信息。
 		// 若 `info.composition.method` 已被赋值则说明已经记录过（同一字形可能有多个条目）。
 		if(!info.composition.method) {
