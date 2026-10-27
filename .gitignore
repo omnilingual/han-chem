@@ -1,6 +1,7 @@
 # Project
 /dist
 /dev
+/private
 /resources/db/
 /**/*.d.*ts
 /**/*.*js
