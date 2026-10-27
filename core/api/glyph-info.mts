@@ -1,65 +1,63 @@
-import * as GuangYun from '../guang-yun.mjs';
-import type * as Types from './glyph-info-types.mts';
-import Lodash, { at } from 'lodash';
+// 现有功能重现：按字形查询信息（旧立面）。
+// 旧 GlyphInfo 类型已收敛为本模块内部，不从公用类型库（core/types.mjs）导出。
+// 数据源改为书证库 + 字形库（core/db.mjs）。
+
+import * as Db from '../db.mjs';
+
+//#region 内部类型（旧立面，仅本功能使用）
+
+type GlyphClassification = '傳承字' | '簡化字' | '二級簡化字';
+type GlyphProperties = '聲旁' | '次級聲旁';
+
+type PhonologyRecord =
+	| { domain: string; source: string; top: string; bottom: string }
+	| { domain: string; source: string; initial: string; rhymeClass: string; rhyme: string; tone: string; division: string; medial: string }
+	| { domain: string; initial: string; rhyme: string; tone: string };
+
+type GlyphInfo = {
+	identity: {
+		key: string;
+		unicodeCharacter: string | null;
+		classifications: GlyphClassification[];
+		properties: GlyphProperties[];
+	};
+	composition: {
+		method: string | null;
+		shapes: string[];
+		sounds: string[];
+		notes?: string;
+	};
+	phonology: PhonologyRecord[];
+};
+
+//#endregion
 
 /** 依键名检测是否收录了某个字形。 */
 export function HasGlyph(glyphKey: string): boolean {
-	if(GuangYun.HasGlyph(glyphKey))
-		return true;
-	return false;
+	return Db.GetGlyph(glyphKey) !== null || Db.AttestationsByGlyph(glyphKey).length > 0;
 }
 
-/** 字形是否因非 Unicode 字符而采用索引收录。 */
-export function IsIndexedGlyph(glyphKey: string): boolean {
-	// TODO
-	return true;
-}
+const domainOrder = { '上古': 0, '早期中古': 1, '晚期中古': 2, '近古': 3, '現代': 4 };
 
-type PhonologicalDomain = Types.PhonologyRecord['domain'];
-const pdSortLookUp: {
-	[key in PhonologicalDomain]?: number;
-} = {
-	上古: 0,
-	早期中古: 1,
-	晚期中古: 2,
-	近古: 3,
-	現代: 4,
-};
-export function ComparePhonologicalDomain(a: PhonologicalDomain, b: PhonologicalDomain): number {
-	if(a === b)
-		return 0;
-
-	const aTop = a.split('/')[0] as PhonologicalDomain, bTop = b.split('/')[0] as PhonologicalDomain;
-
-	if((aTop in pdSortLookUp) && (bTop in pdSortLookUp)) {
-		if(aTop !== bTop)
-			return pdSortLookUp[aTop] - pdSortLookUp[bTop];
-	}
-
-	if(!(aTop in pdSortLookUp)) {
-		if(bTop in pdSortLookUp)
-			return 1;
-		return (a > b) ? 1 : -1;
-	}
-	if(!(bTop in pdSortLookUp))
-		return -1;
-
-	return (a > b) ? 1 : -1;
+function domainRank(d) {
+	const top = d.split('/')[0];
+	return top in domainOrder ? domainOrder[top] : 99;
 }
 
 /**
- * 查询字形信息。
+ * 查询字形信息（旧立面，现由书证库/字形库聚合）。
  * @param glyphKey 要检测的字形。
  */
-export function QueryGlyphInfo(glyphKey: string): Types.GlyphInfo | null {
-	if(!HasGlyph(glyphKey))
+export function QueryGlyphInfo(glyphKey: string): GlyphInfo | null {
+	const boxed = Db.BoxGlyph(glyphKey);
+	const atts = Db.AttestationsByGlyph(glyphKey);
+	if(!boxed && atts.length === 0)
 		return null;
 
-	// 先声明要返回的字形信息结构体。
-	const info: Types.GlyphInfo = {
+	const info: GlyphInfo = {
 		identity: {
 			key: glyphKey,
-			unicodeCharacter: IsIndexedGlyph(glyphKey) ? glyphKey : null,
+			unicodeCharacter: glyphKey,
 			classifications: [],
 			properties: [],
 		},
@@ -70,83 +68,51 @@ export function QueryGlyphInfo(glyphKey: string): Types.GlyphInfo | null {
 		},
 		phonology: [],
 	};
-	// 讀取《廣韻》數據庫。
-	for(const entry of GuangYun.QueryEntries(glyphKey)) {
-		// 记录字形学信息。
-		// 若 `info.composition.method` 已被赋值则说明已经记录过（同一字形可能有多个条目）。
-		if(!info.composition.method) {
-			info.composition.method = entry.ziLei as Types.GlyphInfo['composition']['method'] || '形聲';
-			info.composition.shapes = Array.from(entry.shengXing_Xing);
-			info.composition.sounds = Array.from(entry.shengXing_Sheng);
-			if(entry.shengXingXiWei)
-				info.composition.notes = entry.shengXingXiWei;
-		}
 
-		/* 字形分類與屬性信息。 */
-		// 《廣韻》里有考的一定是传承字形。
-		info.identity.classifications.push('傳承字');
-		if(entry.shiFouShengPang)
-			info.identity.properties.push('聲旁');
-		if(entry.shiFouCiJiShengPang)
-			info.identity.properties.push('次級聲旁');
+	if(boxed) {
+		info.identity.unicodeCharacter = boxed.char;
+		info.identity.classifications = boxed.classifications;
+		info.identity.properties = boxed.tags.includes('聲旁') ? ['聲旁'] : [];
+		info.composition.method = boxed.tags.filter(t => t !== '聲旁').join('');
+		info.composition.shapes = boxed.shapes;
+		info.composition.sounds = boxed.sounds;
+	}
 
-		/* 《切韻》。 */
+	for(const a of atts) {
+		if(!a.reading)
+			continue;
+		const c = a.reading.components;
 
-		if(entry.shangZi) {
+		if(a.source === '切韻') {
 			info.phonology.push({
 				domain: '早期中古',
 				source: '切韻',
-				top: entry.shangZi,
-				bottom: entry.xiaZi,
+				top: c['反切上字'] || '',
+				bottom: c['反切下字'] || '',
 			});
-		}
-
-		/* 《廣韻》。 */
-
-		info.phonology.push({
-			domain: '晚期中古',
-			source: '廣韻',
-			initial: entry.shengNiu,
-			division: entry.deng as Types.LMCPhonology['division'],
-			medial: entry.hu as Types.LMCPhonology['medial'],
-			rhymeClass: entry.she,
-			rhyme: entry.yunBu_TiaoZhengHou,
-			tone: entry.shengDiao as Types.LMCPhonology['tone'],
-		});
-
-		/* 北京官話預測音。 */
-
-		if(entry.xianDaiBeiJingYinLiLunYin) {
+		} else if(a.source === '廣韻') {
 			info.phonology.push({
-				domain: '現代/北京官話/預測音',
-				initial: entry.jingSheng,
-				rhyme: entry.jingYun,
-				tone: entry.jingDiao,
+				domain: '晚期中古',
+				source: '廣韻',
+				initial: c['声'] || '',
+				division: c['等'] || '',
+				medial: c['呼'] || '',
+				rhymeClass: c['摄'] || '',
+				rhyme: c['韵'] || '',
+				tone: c['调'] || '',
 			});
-		}
 
-		/* 粵語預測音。 */
-
-		if(entry.xianDaiGuangZhouYinLiLunYin) {
-			info.phonology.push({
-				domain: '現代/粵語/預測音',
-				initial: entry.yueSheng,
-				rhyme: entry.yueYun,
-				tone: entry.yueDiao,
-			});
+			// 预测音（测量算子，非权威书证）。
+			const bj = Db.PredictModern(a.key, '北京');
+			if(bj)
+				info.phonology.push({ domain: '現代/北京官話/預測音', initial: bj.components['声'] || '', rhyme: bj.components['韵'] || '', tone: bj.components['调'] || '' });
+			const gz = Db.PredictModern(a.key, '广州');
+			if(gz)
+				info.phonology.push({ domain: '現代/粵語/預測音', initial: gz.components['声'] || '', rhyme: gz.components['韵'] || '', tone: gz.components['调'] || '' });
 		}
 	}
 
-	//#region 後處理
-
-	// 對字形分類與屬性信息去重。
-	info.identity.classifications = Lodash.uniq(info.identity.classifications);
-	info.identity.properties = Lodash.uniq(info.identity.properties);
-
-	// 對音韻信息排序。
-	info.phonology.sort((a, b) => ComparePhonologicalDomain(a.domain, b.domain));
-
-	//#endregion
+	info.phonology.sort(function(a, b) { return domainRank(a.domain) - domainRank(b.domain); });
 
 	return info;
 }

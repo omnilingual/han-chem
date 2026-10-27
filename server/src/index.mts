@@ -25,6 +25,10 @@ app.use('/', Express.static(publicDir));
 import Api from './api.mjs';
 app.use('/api', Api);
 
+// 数据库预览 API
+import DbPreviewApi from './db-preview-api.mjs';
+app.use('/api/db-preview', DbPreviewApi);
+
 // Error handling
 import { HandleHttpErrors } from './web.mjs';
 app.use(HandleHttpErrors);

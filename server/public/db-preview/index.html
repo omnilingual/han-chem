@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>漢鑒/数据库预览</title>
+	<link rel="stylesheet" href="./index.css" />
+	<script type="module" src="./index.mjs"></script>
+</head>
+<body>
+	<header>
+		<h1><a href="/">漢鑒</a>/<a href="/db-preview">数据库预览</a></h1>
+		<form id="search-form">
+			<p>
+				<select id="kind">
+					<option value="attestation">书证</option>
+					<option value="glyph">字形</option>
+				</select>
+				<input id="query" type="text" placeholder="搜索" />
+				<label><input id="regex" type="checkbox" /> 正则</label>
+				<button>搜索</button>
+			</p>
+		</form>
+		<p class="help">支持 <code>field:value</code> 键值检索与正则。书证字段：key/glyph/source/reading/gloss；字形字段：key/char/encodings/classifications/tags/representative。</p>
+	</header>
+	<main>
+		<section id="stats"></section>
+		<section id="result"></section>
+	</main>
+</body>
+</html>
