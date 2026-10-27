@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>漢鑒 · 蓝图工具</title>
+<style>
+  :root { --bg:#1e1e2e; --panel:#2a2a3c; --node:#34344a; --head:#3a3a52; --wire:#8f8faf; --text:#e8e8f0; --muted:#a0a0b8; --accent:#7aa2f7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; }
+  header { padding:10px 18px; background:var(--panel); border-bottom:1px solid #000; display:flex; align-items:center; gap:14px; }
+  header h1 { font-size:16px; margin:0; font-weight:600; }
+  header .sub { color:var(--muted); font-size:12px; flex:1; }
+  button { background:var(--accent); color:#101018; border:none; padding:7px 14px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px; }
+  button.ghost { background:#3a3a52; color:var(--text); }
+  button:hover { filter:brightness(1.1); }
+  main { flex:1; display:flex; overflow:hidden; }
+  #canvas { flex:1; position:relative; overflow:auto; background:
+    radial-gradient(circle, #242436 1px, transparent 1px);
+    background-size:24px 24px; }
+  #inner { position:relative; width:4200px; height:3000px; }
+  #wires { position:absolute; top:0; left:0; width:4200px; height:3000px; pointer-events:none; }
+  .node { position:absolute; width:190px; background:var(--node); border:1px solid #000; border-radius:8px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+  .node .nhead { padding:6px 10px; background:var(--head); border-radius:8px 8px 0 0; font-weight:600; display:flex; align-items:center; cursor:move; user-select:none; }
+  .node .nhead .cat { font-size:10px; color:var(--muted); font-weight:400; margin-left:auto; }
+  .node .nhead .del { margin-left:8px; cursor:pointer; color:var(--muted); font-weight:700; padding:0 4px; }
+  .node .nhead .del:hover { color:#f7768e; }
+  .node .nbody { padding:6px 0; }
+  .ports-row { display:flex; justify-content:space-between; align-items:flex-start; }
+  .ports-l, .ports-r { display:flex; flex-direction:column; gap:4px; padding:0 4px; }
+  .port { display:flex; align-items:center; gap:5px; font-size:11px; height:20px; position:relative; }
+  .port.in { padding-left:0; }
+  .port.out { justify-content:flex-end; padding-right:0; }
+  .dot { width:12px; height:12px; border-radius:50%; border:2px solid #000; background:#565678; cursor:crosshair; flex:0 0 auto; }
+  .port.in .dot { order:0; }
+  .port.out .dot { order:2; }
+  .port-label { color:var(--text); }
+  .port .type { color:var(--muted); font-size:9px; }
+  .literal-input { width:64px; background:#222233; color:var(--text); border:1px solid #000; border-radius:4px; padding:1px 4px; font-size:11px; }
+  .port.wired .literal-input { opacity:.4; pointer-events:none; }
+  .port.wired .dot { background:var(--accent); }
+  .params { padding:6px 10px 2px; border-top:1px dashed #000; margin-top:4px; }
+  .params label { color:var(--muted); font-size:10px; display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+  .params select, .params input[type=text] { flex:1; background:#222233; color:var(--text); border:1px solid #000; border-radius:4px; padding:2px 4px; font-size:11px; }
+  .result { padding:5px 10px; border-top:1px solid #000; font-size:11px; min-height:20px; color:var(--muted); margin-top:2px; }
+  .result b { color:var(--text); }
+  .result.sample { max-height:64px; overflow:hidden; line-height:1.5; }
+  .node.evaluated { border-color:var(--accent); }
+  #sidebar { width:300px; background:var(--panel); border-left:1px solid #000; padding:14px; overflow:auto; }
+  #sidebar h2 { font-size:13px; margin:0 0 8px; }
+  #sidebar .tip { color:var(--muted); font-size:11px; line-height:1.6; }
+  #sidebar .stat { background:var(--node); border-radius:6px; padding:10px; margin-top:10px; font-size:12px; }
+  #sidebar .stat .big { font-size:24px; font-weight:700; color:#9ece6a; }
+  .palette-item { background:var(--node); border:1px solid #000; border-radius:6px; padding:7px 10px; margin:6px 0; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:8px; }
+  .palette-item:hover { border-color:var(--accent); }
+  .palette-item .plabel { font-weight:600; }
+  .palette-item .pcat { color:var(--muted); font-size:10px; margin-left:auto; }
+  .legend { margin-top:12px; font-size:11px; color:var(--muted); }
+  .legend .sw { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<header>
+  <h1>漢鑒 · 蓝图工具</h1>
+  <span class="sub">节点图 · 类型化连线 · 后端惰性求值 · 真实书证库</span>
+  <button id="run">运行</button>
+  <button id="reset" class="ghost">重置示例</button>
+</header>
+<main>
+  <div id="canvas"><div id="inner"><svg id="wires"></svg></div></div>
+  <div id="sidebar">
+    <h2>节点</h2>
+    <div id="palette"></div>
+    <h2 style="margin-top:14px">说明</h2>
+    <div class="tip">
+      从左侧点选节点加入画布，拖动节点移动，从输出圆点拖到输入圆点连线。<br><br>
+      <b>参数风格</b>（今晚定稿）：<br>
+      ① 仅输入的量（字段/来源/条件）→ 内嵌下拉框；<br>
+      ② 可能作输出的量（如筛选的「值」）→ UE 风格：节点上可编辑字面量，接引线后字面量被屏蔽；<br>
+      ③ 复合条件（同声符等）→ 由「扩张」子图拼出，不设枚举项。
+    </div>
+    <div class="stat" id="statbox"><div class="big" id="statbig">—</div><div id="statlabel">点「运行」查看</div></div>
+    <div class="legend" id="legend"></div>
+  </div>
+</main>
+<script>
+(function () {
+  var TYPE_COLORS = {
+    '书证集': '#e0af68',
+    '值集': '#9ece6a',
+    '集合': '#bb9af7',
+    '值': '#7aa2f7',
+    '数': '#ff9e64'
+  };
+  var SCHEMA = null;
+  var nodes = [];
+  var edges = [];
+  var nextId = 1;
+  var results = {};
+  var drag = null;      // {kind:'node', id, dx, dy} | {kind:'wire', from:{node,port,type}}
+  var tempWire = null;
+
+  function $(sel) { return document.querySelector(sel); }
+  var inner = document.getElementById('inner');
+  var svg = document.getElementById('wires');
+
+  function typeCompat(from, to) {
+    if (from === to) return true;
+    return to === '集合' && (from === '书证集' || from === '值集');
+  }
+  function typeKey(t) { return t; }
+
+  // —— 数据加载 ——
+  function fetchSchema() {
+    fetch('/api/blueprint/schema').then(function (r) { return r.json(); }).then(function (s) {
+      SCHEMA = s.nodeDefs;
+      renderPalette();
+      renderLegend();
+      loadDemo();
+    }).catch(function (e) {
+      document.getElementById('statlabel').textContent = '加载 schema 失败：' + e;
+    });
+  }
+
+  function renderPalette() {
+    var p = document.getElementById('palette');
+    p.innerHTML = '';
+    SCHEMA.forEach(function (def) {
+      var el = document.createElement('div');
+      el.className = 'palette-item';
+      el.innerHTML = '<span class="plabel">' + def.label + '</span><span class="pcat">' + def.category + '</span>';
+      el.addEventListener('click', function () { addNode(def.type); });
+      p.appendChild(el);
+    });
+  }
+
+  function renderLegend() {
+    var l = document.getElementById('legend');
+    var html = '';
+    for (var t in TYPE_COLORS) {
+      html += '<span class="sw" style="background:' + TYPE_COLORS[t] + '"></span> ' + t + '&nbsp;&nbsp;';
+    }
+    l.innerHTML = html;
+  }
+
+  // —— 图状态 ——
+  function addNode(type, x, y) {
+    var def = defByType(type);
+    if (!def) return;
+    var node = {
+      id: 'n' + (nextId++),
+      type: type,
+      x: x == null ? 120 + Math.random() * 200 : x,
+      y: y == null ? 80 + Math.random() * 200 : y,
+      params: {},
+      values: {}
+    };
+    def.params.forEach(function (p) {
+      if (p.kind === 'enum' && p.options && p.options.length) node.params[p.name] = p.options[0];
+      else node.params[p.name] = '';
+    });
+    def.inputs.forEach(function (inp) {
+      if (inp.literal) node.values[inp.name] = '';
+    });
+    nodes.push(node);
+    renderAll();
+    return node;
+  }
+
+  function defByType(type) {
+    return SCHEMA.find(function (d) { return d.type === type; });
+  }
+
+  function removeNode(id) {
+    nodes = nodes.filter(function (n) { return n.id !== id; });
+    edges = edges.filter(function (e) { return e.from.node !== id && e.to.node !== id; });
+    results = {};
+    renderAll();
+  }
+
+  function connectedEdges(nodeId, port) {
+    return edges.filter(function (e) { return e.to.node === nodeId && e.to.port === port; });
+  }
+
+  function isWired(nodeId, port) {
+    return connectedEdges(nodeId, port).length > 0;
+  }
+
+  // —— 渲染 ——
+  function renderAll() {
+    renderNodes();
+    renderWires();
+  }
+
+  function renderNodes() {
+    var existing = {};
+    document.querySelectorAll('.node').forEach(function (el) { existing[el.dataset.id] = el; });
+    var seen = {};
+
+    nodes.forEach(function (node) {
+      var def = defByType(node.type);
+      var el = existing[node.id];
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'node';
+        inner.appendChild(el);
+      }
+      seen[node.id] = true;
+      el.dataset.id = node.id;
+      el.style.left = node.x + 'px';
+      el.style.top = node.y + 'px';
+
+      var head = '<div class="nhead"><span>' + def.label + '</span><span class="cat">' + def.category + '</span><span class="del" data-del="' + node.id + '">×</span></div>';
+      var portsL = '<div class="ports-l">';
+      def.inputs.forEach(function (inp) {
+        var wired = isWired(node.id, inp.name);
+        portsL += '<div class="port in' + (wired ? ' wired' : '') + '" data-node="' + node.id + '" data-port="' + inp.name + '" data-dir="in" data-type="' + inp.type + '">'
+          + '<span class="dot" style="background:' + (TYPE_COLORS[inp.type] || '#565678') + '"></span>'
+          + '<span class="port-label">' + inp.label + '</span>';
+        if (inp.literal) {
+          var val = (node.values[inp.name] || '');
+          portsL += '<input class="literal-input" data-lit="' + node.id + '.' + inp.name + '" value="' + esc(val) + '" placeholder="' + (wired ? '引线提供' : '字面量') + '">';
+        } else {
+          portsL += '<span class="type">' + inp.type + '</span>';
+        }
+        portsL += '</div>';
+      });
+      portsL += '</div>';
+
+      var portsR = '<div class="ports-r">';
+      def.outputs.forEach(function (o) {
+        portsR += '<div class="port out" data-node="' + node.id + '" data-port="' + o.name + '" data-dir="out" data-type="' + o.type + '">'
+          + '<span class="port-label">' + o.label + '</span>'
+          + '<span class="type">' + o.type + '</span>'
+          + '<span class="dot" style="background:' + (TYPE_COLORS[o.type] || '#565678') + '"></span>'
+          + '</div>';
+      });
+      portsR += '</div>';
+
+      var params = '';
+      if (def.params.length) {
+        params = '<div class="params">';
+        def.params.forEach(function (p) {
+          params += '<label>' + p.label;
+          if (p.kind === 'enum') {
+            params += '<select data-param="' + node.id + '.' + p.name + '">';
+            p.options.forEach(function (o) {
+              params += '<option value="' + esc(o) + '"' + (node.params[p.name] === o ? ' selected' : '') + '>' + esc(o) + '</option>';
+            });
+            params += '</select>';
+          } else {
+            params += '<input type="text" data-param="' + node.id + '.' + p.name + '" value="' + esc(node.params[p.name] || '') + '">';
+          }
+          params += '</label>';
+        });
+        params += '</div>';
+      }
+
+      var res = results[node.id] ? resultHtml(node, results[node.id]) : '<div class="result">未运行</div>';
+
+      el.innerHTML = head + '<div class="nbody"><div class="ports-row">' + portsL + portsR + '</div>' + params + res + '</div>';
+      el.classList.toggle('evaluated', !!results[node.id]);
+    });
+
+    Object.keys(existing).forEach(function (id) {
+      if (!seen[id]) existing[id].remove();
+    });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function resultHtml(node, res) {
+    var html = '<div class="result';
+    var body = '';
+    for (var port in res) {
+      var v = res[port];
+      if (v.kind === 'collection') {
+        var sample = v.sample.join(' ');
+        html += ' sample';
+        body += '<b>' + v.count + '</b> 个' + (sample ? ' · ' + esc(sample) : '');
+      } else if (v.kind === 'number') {
+        body += '<b>' + (node.type === 'ratio' ? v.value.toFixed(2) + '%' : v.value) + '</b>';
+      } else {
+        body += '<b>' + esc(v.value) + '</b>';
+      }
+    }
+    html += '">' + body + '</div>';
+    return html;
+  }
+
+  function portAnchors() {
+    var anchors = {};
+    document.querySelectorAll('.port').forEach(function (el) {
+      var dot = el.querySelector('.dot');
+      if (!dot) return;
+      var r = dot.getBoundingClientRect();
+      var ir = inner.getBoundingClientRect();
+      anchors[el.dataset.node + '.' + el.dataset.port + '.' + el.dataset.dir] = {
+        x: r.left - ir.left + r.width / 2,
+        y: r.top - ir.top + r.height / 2
+      };
+    });
+    return anchors;
+  }
+
+  function renderWires() {
+    var anchors = portAnchors();
+    var html = '';
+    edges.forEach(function (e) {
+      var a = anchors[e.from.node + '.' + e.from.port + '.out'];
+      var b = anchors[e.to.node + '.' + e.to.port + '.in'];
+      if (!a || !b) return;
+      html += wirePath(a, b);
+    });
+    if (tempWire && tempWire.fromAnchor) {
+      html += wirePath(tempWire.fromAnchor, tempWire.to);
+    }
+    svg.innerHTML = html;
+    svg.querySelectorAll('path').forEach(function (p, i) {
+      p.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        if (i < edges.length) { edges.splice(i, 1); results = {}; renderAll(); }
+      });
+    });
+  }
+
+  function wirePath(a, b) {
+    var dx = Math.max(30, Math.abs(b.x - a.x) * 0.5);
+    return '<path d="M ' + a.x + ' ' + a.y + ' C ' + (a.x + dx) + ' ' + a.y + ', ' + (b.x - dx) + ' ' + b.y + ', ' + b.x + ' ' + b.y + '" stroke="#8f8faf" stroke-width="2" fill="none" style="pointer-events:stroke; cursor:pointer;" />';
+  }
+
+  // —— 交互 ——
+  function canvasPos(e) {
+    var ir = inner.getBoundingClientRect();
+    return { x: e.clientX - ir.left, y: e.clientY - ir.top };
+  }
+
+  document.addEventListener('mousedown', function (e) {
+    // 删除按钮
+    var del = e.target.closest('.del');
+    if (del) { removeNode(del.dataset.del); return; }
+
+    // 节点头拖动
+    var head = e.target.closest('.nhead');
+    if (head) {
+      var nodeEl = head.closest('.node');
+      var node = nodes.find(function (n) { return n.id === nodeEl.dataset.id; });
+      var p = canvasPos(e);
+      drag = { kind: 'node', id: node.id, dx: p.x - node.x, dy: p.y - node.y };
+      e.preventDefault();
+      return;
+    }
+
+    // 输出端口起线
+    var port = e.target.closest('.port');
+    if (port && port.dataset.dir === 'out') {
+      var a = portAnchors()[port.dataset.node + '.' + port.dataset.port + '.out'];
+      drag = { kind: 'wire', from: { node: port.dataset.node, port: port.dataset.port, type: port.dataset.type } };
+      tempWire = { fromAnchor: a, to: a };
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener('mousemove', function (e) {
+    if (!drag) return;
+    if (drag.kind === 'node') {
+      var node = nodes.find(function (n) { return n.id === drag.id; });
+      var p = canvasPos(e);
+      node.x = Math.max(0, p.x - drag.dx);
+      node.y = Math.max(0, p.y - drag.dy);
+      renderAll();
+    } else if (drag.kind === 'wire') {
+      tempWire.to = canvasPos(e);
+      renderWires();
+    }
+  });
+
+  document.addEventListener('mouseup', function (e) {
+    if (!drag) return;
+    if (drag.kind === 'wire') {
+      var port = e.target.closest('.port');
+      if (port && port.dataset.dir === 'in') {
+        var toNode = port.dataset.node, toPort = port.dataset.port, toType = port.dataset.type;
+        if (typeCompat(drag.from.type, toType)) {
+          // 一个输入端口只允许一条引线：先清旧线
+          edges = edges.filter(function (ed) { return !(ed.to.node === toNode && ed.to.port === toPort); });
+          edges.push({ from: { node: drag.from.node, port: drag.from.port }, to: { node: toNode, port: toPort } });
+          results = {};
+          renderAll();
+        }
+      }
+      tempWire = null;
+      renderWires();
+    }
+    drag = null;
+  });
+
+  // 参数控件（事件委托）
+  document.addEventListener('change', function (e) {
+    var ctl = e.target.closest('[data-param]');
+    if (ctl) {
+      var parts = ctl.dataset.param.split('.');
+      var node = nodes.find(function (n) { return n.id === parts[0]; });
+      node.params[parts[1]] = ctl.value;
+      results = {};
+      renderNodes();
+      return;
+    }
+    var lit = e.target.closest('.literal-input');
+    if (lit) {
+      var lp = lit.dataset.lit.split('.');
+      var node = nodes.find(function (n) { return n.id === lp[0]; });
+      node.values[lp[1]] = lit.value;
+      results = {};
+      renderNodes();
+    }
+  });
+
+  // —— 求值 ——
+  function run() {
+    var graph = {
+      nodes: nodes.map(function (n) { return { id: n.id, type: n.type, params: n.params, values: n.values }; }),
+      edges: edges,
+      outputs: nodes.map(function (n) { return n.id; })
+    };
+    fetch('/api/blueprint/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(graph)
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(t); });
+      return r.json();
+    }).then(function (resp) {
+      results = resp.results || {};
+      renderNodes();
+      updateStat();
+    }).catch(function (e) {
+      document.getElementById('statlabel').textContent = '求值失败：' + e.message;
+    });
+  }
+
+  function updateStat() {
+    // 找出占比节点做头条
+    var ratioNode = nodes.find(function (n) { return n.type === 'ratio' && results[n.id]; });
+    if (ratioNode) {
+      var v = results[ratioNode.id].out.value;
+      document.getElementById('statbig').textContent = v.toFixed(2) + '%';
+      document.getElementById('statlabel').textContent = '占比节点输出';
+    } else {
+      var anyNode = nodes.find(function (n) { return results[n.id]; });
+      if (anyNode) {
+        var r = results[anyNode.id].out;
+        document.getElementById('statbig').textContent = r.kind === 'number' ? r.value : r.count;
+        document.getElementById('statlabel').textContent = '节点 ' + anyNode.id + ' 输出';
+      }
+    }
+  }
+
+  // —— 示例图 ——
+  function loadDemo() {
+    nodes = []; edges = []; nextId = 1; results = {};
+    var src = addNode('source', 60, 220);
+    src.params.source = '廣韻';
+    var f = addNode('filter', 340, 140);
+    f.params.field = '声';
+    f.values.value = '端';
+    var c1 = addNode('count', 620, 120);
+    var c2 = addNode('count', 620, 320);
+    var r = addNode('ratio', 880, 220);
+    edges = [
+      { from: { node: src.id, port: 'out' }, to: { node: f.id, port: 'in' } },
+      { from: { node: f.id, port: 'out' }, to: { node: c1.id, port: 'in' } },
+      { from: { node: src.id, port: 'out' }, to: { node: c2.id, port: 'in' } },
+      { from: { node: c1.id, port: 'out' }, to: { node: r.id, port: 'part' } },
+      { from: { node: c2.id, port: 'out' }, to: { node: r.id, port: 'whole' } }
+    ];
+    renderAll();
+    run();
+  }
+
+  document.getElementById('run').addEventListener('click', run);
+  document.getElementById('reset').addEventListener('click', loadDemo);
+  document.getElementById('canvas').addEventListener('mousedown', function (e) {
+    if (e.target === inner || e.target === document.getElementById('canvas') || e.target === svg) {
+      // 点空白处取消
+      drag = null; tempWire = null; renderWires();
+    }
+  });
+
+  fetchSchema();
+})();
+</script>
+</body>
+</html>

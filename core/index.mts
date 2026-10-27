@@ -3,4 +3,5 @@
 
 export * from './types.mjs';
 export * from './db.mjs';
+export * from './blueprint.mjs';
 export { QueryGlyphInfo, HasGlyph } from './api/glyph-info.mjs';

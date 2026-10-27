@@ -1,6 +1,7 @@
 import Express from 'express';
 
 const app = Express();
+app.use(Express.json());
 export default app;
 
 // Constants
@@ -28,6 +29,10 @@ app.use('/api', Api);
 // 数据库预览 API
 import DbPreviewApi from './db-preview-api.mjs';
 app.use('/api/db-preview', DbPreviewApi);
+
+// 蓝图工具 API
+import BlueprintApi from './blueprint-api.mjs';
+app.use('/api/blueprint', BlueprintApi);
 
 // Error handling
 import { HandleHttpErrors } from './web.mjs';
